@@ -1,20 +1,18 @@
 export default function Budgets() {
 
-  const transactions = JSON.parse(
-    localStorage.getItem("transactions")
-  ) || [];
+  const transactions =
+    JSON.parse(localStorage.getItem("transactions")) || [];
 
-  const expenseTransactions =
-    transactions.filter(
-      item => item.type === "Expense"
-    );
+  const expenseTransactions = transactions.filter(
+    item => item.type === "Expense"
+  );
 
   const categoryTotals = {};
 
   expenseTransactions.forEach(item => {
     categoryTotals[item.category] =
-      (categoryTotals[item.category] || 0)
-      + Number(item.amount);
+      (categoryTotals[item.category] || 0) +
+      Number(item.amount);
   });
 
   const budgetLimits = {
@@ -28,26 +26,25 @@ export default function Budgets() {
     Other: 2000,
   };
 
-  const budgets = Object.keys(
-    categoryTotals
-  ).map(category => ({
+  const budgets = Object.keys(budgetLimits).map(category => ({
     category,
-    spent: categoryTotals[category],
-    limit:
-      budgetLimits[category] || 3000,
+    spent: categoryTotals[category] || 0,
+    limit: budgetLimits[category],
   }));
 
   return (
     <div>
 
       <h1 className="text-3xl font-bold text-white mb-8">
-        Budgets
+        Budget Management
       </h1>
 
       {budgets.length === 0 ? (
+
         <p className="text-slate-400">
-          No expense data available.
+          No budget data available.
         </p>
+
       ) : (
 
         budgets.map((budget, index) => {
@@ -57,45 +54,84 @@ export default function Budgets() {
             100
           );
 
+          const remaining =
+            budget.limit - budget.spent;
+
+          let status = "Safe";
+          let color = "bg-green-500";
+
+          if (percentage >= 90) {
+            status = "Critical";
+            color = "bg-red-500";
+          } else if (percentage >= 70) {
+            status = "Warning";
+            color = "bg-yellow-500";
+          }
+
           return (
 
             <div
               key={index}
-              className="bg-slate-800 p-5 rounded-xl mb-5"
+              className="bg-slate-800 p-6 rounded-xl mb-6 shadow-lg"
             >
 
-              <div className="flex justify-between text-white">
+              <div className="flex justify-between mb-2 text-white">
 
-                <span>
+                <h2 className="font-semibold text-lg">
                   {budget.category}
-                </span>
+                </h2>
 
                 <span>
-                  ₹{budget.spent} / ₹{budget.limit}
+                  ₹{budget.spent.toLocaleString("en-IN")} /
+                  ₹{budget.limit.toLocaleString("en-IN")}
                 </span>
 
               </div>
 
-              <div className="bg-slate-700 h-3 rounded-full mt-3">
+              <div className="bg-slate-700 h-3 rounded-full">
 
                 <div
-                  className={`h-3 rounded-full ${
-                    percentage > 80
+                  className={`${color} h-3 rounded-full`}
+                  style={{
+                    width: `${percentage}%`,
+                  }}
+                />
+
+              </div>
+
+              <div className="flex justify-between mt-4 text-sm text-slate-300">
+
+                <span>
+                  Used: {percentage.toFixed(1)}%
+                </span>
+
+                <span>
+                  Remaining: ₹
+                  {remaining.toLocaleString("en-IN")}
+                </span>
+
+              </div>
+
+              <div className="mt-2">
+
+                <span
+                  className={`px-3 py-1 rounded-full text-white text-sm ${
+                    percentage >= 90
                       ? "bg-red-500"
-                      : percentage > 60
+                      : percentage >= 70
                       ? "bg-yellow-500"
                       : "bg-green-500"
                   }`}
-                  style={{
-                    width: `${percentage}%`
-                  }}
-                />
+                >
+                  {status}
+                </span>
 
               </div>
 
             </div>
 
           );
+
         })
 
       )}
